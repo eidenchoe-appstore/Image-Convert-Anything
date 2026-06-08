@@ -2,23 +2,27 @@ import SwiftUI
 
 struct ContentView: View {
     @ObservedObject var store: ConversionStore
-    @State private var selectedJobID: ConversionJob.ID?
 
     var body: some View {
         NavigationSplitView {
             InputSidebarView(store: store)
-                .navigationSplitViewColumnWidth(min: 300, ideal: 340, max: 420)
+                .navigationSplitViewColumnWidth(min: 250, ideal: 310, max: 420)
         } detail: {
             VStack(spacing: 0) {
-                ConversionToolbarView(store: store)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 16)
+                ScrollView(.vertical) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        ConversionToolbarView(store: store)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 16)
 
-                Divider()
+                        Divider()
 
-                ConversionProgressView(store: store)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 14)
+                        ConversionProgressView(store: store)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 14)
+                    }
+                }
+                .frame(maxHeight: 245)
 
                 Divider()
 

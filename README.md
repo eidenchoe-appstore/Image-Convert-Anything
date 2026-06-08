@@ -1,30 +1,33 @@
-# Image Convert Anything
+# <img src="icon.png" alt="Image Convert Anything icon" width="34"> Image Convert Anything
 
-`Image Convert Anything` is a local macOS app that batch converts RAW and other macOS-readable image files into common output formats.
+Batch-convert images and videos on macOS with a simple Finder-friendly workflow.
 
-## Download
-
-Download the latest DMG from GitHub Releases:
-
-[Download ImageConvertAnything.dmg](https://github.com/eidenchoe-appstore/Image-Convert-Anything/releases/latest/download/ImageConvertAnything.dmg)
+[Download the latest DMG](https://github.com/eidenchoe-appstore/Image-Convert-Anything/releases/latest/download/ImageConvertAnything.dmg)
 
 Open the DMG, then drag `Image Convert Anything.app` into `Applications`.
 
-## Features
+## Highlights
 
-- Drag and drop files or folders into the app.
-- Select input files and folders with Finder panels.
-- Recursively scan folders and preserve the input folder structure in the output folder.
-- Read RAW, JPEG, PNG, TIFF, HEIC, WebP, GIF, BMP, and other formats supported by macOS image frameworks.
-- Export to PNG, JPEG, HEIC, TIFF, GIF, BMP, or JPEG 2000.
-- Use PNG as the default output format.
-- Control quality for lossy formats such as JPEG, HEIC, and JPEG 2000.
-- Skip files that macOS cannot decode without stopping the full batch.
-- Preserve input folder structure in the selected output folder.
-- Avoid overwriting files by adding numeric suffixes.
-- Build a local installable DMG with `hdiutil`.
+| Feature | What it does |
+| --- | --- |
+| Image converter | Reads RAW, JPEG, PNG, TIFF, HEIC, WebP, GIF, BMP, and other formats supported by macOS image frameworks. |
+| Video converter | Converts common video files such as MOV, MP4, M4V, AVI, MKV, and WebM into GIF or WebM. |
+| Finder-first input | Add files and folders from Finder panels, or drag them directly into the app. |
+| Folder batch mode | Scans folders recursively and preserves the original folder structure in the output folder. |
+| Flexible export | Exports images to PNG, JPEG, HEIC, TIFF, GIF, BMP, or JPEG 2000. PNG is the default. |
+| Video tuning | Controls GIF/WebM frame rate, maximum width, and WebM quality. |
+| Default output folder | Uses a saved default output folder when no session output folder is selected. |
+| Auto reveal | Opens the output folder automatically after a successful conversion. |
 
-## Output Formats
+## Image Workflow
+
+1. Choose the `Images` tab.
+2. Drop image files/folders, or select them with `Add Images`.
+3. Pick an output format.
+4. Choose a session output folder, or use the saved default folder.
+5. Press `Convert`.
+
+Supported image export formats:
 
 | Format | Extension | Notes |
 | --- | --- | --- |
@@ -36,6 +39,28 @@ Open the DMG, then drag `Image Convert Anything.app` into `Applications`.
 | BMP | `.bmp` | Bitmap output. |
 | JPEG 2000 | `.jp2` | JPEG 2000 output on supported macOS systems. |
 
+## Video Workflow
+
+1. Choose the `Videos` tab.
+2. Drop video files/folders, or select them with `Add Videos`.
+3. Choose `GIF` or `WebM`.
+4. Set FPS, maximum width, and WebM quality when needed.
+5. Press `Convert`.
+
+Video conversion uses `ffmpeg`. The app automatically detects Homebrew-style installs such as `/opt/homebrew/bin/ffmpeg` and `/usr/local/bin/ffmpeg`. If video conversion is unavailable, install it with:
+
+```bash
+brew install ffmpeg
+```
+
+## Settings
+
+Open Settings to choose the default output folder and decide whether the app should reveal the output folder after conversion. If no session output folder is selected, the app uses:
+
+```text
+~/Pictures/Image Convert Anything
+```
+
 ## Package Included
 
 The repository includes a prebuilt local DMG at:
@@ -44,7 +69,7 @@ The repository includes a prebuilt local DMG at:
 dist/ImageConvertAnything.dmg
 ```
 
-For normal installation, prefer the GitHub Release download link above.
+For normal installation, use the GitHub Release download link above.
 
 ## Build And Run
 
@@ -58,10 +83,4 @@ For normal installation, prefer the GitHub Release download link above.
 ./script/package_dmg.sh
 ```
 
-The DMG is created at:
-
-```text
-dist/ImageConvertAnything.dmg
-```
-
-This package is for local installation and testing. It is not Developer ID signed or notarized.
+This package is for local installation and testing. It is ad-hoc signed, not Developer ID notarized.

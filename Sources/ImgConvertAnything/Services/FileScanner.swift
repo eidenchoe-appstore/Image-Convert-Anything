@@ -7,15 +7,43 @@ struct ScanSummary {
 
 final class FileScanner {
     private let fileManager: FileManager
-    private let probe: ImageDecodeProbe
+    private let imageProbe: ImageDecodeProbe
+    private let videoProbe: VideoDecodeProbe
 
-    init(fileManager: FileManager = .default, probe: ImageDecodeProbe = ImageDecodeProbe()) {
+    init(
+        fileManager: FileManager = .default,
+        imageProbe: ImageDecodeProbe = ImageDecodeProbe(),
+        videoProbe: VideoDecodeProbe = VideoDecodeProbe()
+    ) {
         self.fileManager = fileManager
-        self.probe = probe
+        self.imageProbe = imageProbe
+        self.videoProbe = videoProbe
     }
 
     func scan(inputs: [URL], outputFolder: URL, outputFormat: OutputFormat) -> ScanSummary {
         var resolver = OutputPathResolver(outputFolder: outputFolder, outputFormat: outputFormat, fileManager: fileManager)
+        return scan(inputs: inputs, resolver: &resolver) { [imageProbe] url in
+            imageProbe.canDecodeImage(at: url)
+        } skippedReason: {
+            "macOS cannot decode this image"
+        }
+    }
+
+    func scan(inputs: [URL], outputFolder: URL, videoOutputFormat: VideoOutputFormat) -> ScanSummary {
+        var resolver = OutputPathResolver(outputFolder: outputFolder, videoOutputFormat: videoOutputFormat, fileManager: fileManager)
+        return scan(inputs: inputs, resolver: &resolver) { [videoProbe] url in
+            videoProbe.canDecodeVideo(at: url)
+        } skippedReason: {
+            "This video format is not supported"
+        }
+    }
+
+    private func scan(
+        inputs: [URL],
+        resolver: inout OutputPathResolver,
+        canDecode: (URL) -> Bool,
+        skippedReason: () -> String
+    ) -> ScanSummary {
         var jobs: [ConversionJob] = []
 
         for input in inputs {
@@ -23,9 +51,9 @@ final class FileScanner {
             let values = try? standardizedInput.resourceValues(forKeys: [.isDirectoryKey, .isRegularFileKey])
 
             if values?.isDirectory == true {
-                jobs.append(contentsOf: scanDirectory(standardizedInput, resolver: &resolver))
+                jobs.append(contentsOf: scanDirectory(standardizedInput, resolver: &resolver, canDecode: canDecode, skippedReason: skippedReason))
             } else if values?.isRegularFile == true {
-                jobs.append(makeJob(for: standardizedInput, relativePath: standardizedInput.lastPathComponent, resolver: &resolver))
+                jobs.append(makeJob(for: standardizedInput, relativePath: standardizedInput.lastPathComponent, resolver: &resolver, canDecode: canDecode, skippedReason: skippedReason))
             } else {
                 jobs.append(
                     ConversionJob(
@@ -49,7 +77,12 @@ final class FileScanner {
         )
     }
 
-    private func scanDirectory(_ root: URL, resolver: inout OutputPathResolver) -> [ConversionJob] {
+    private func scanDirectory(
+        _ root: URL,
+        resolver: inout OutputPathResolver,
+        canDecode: (URL) -> Bool,
+        skippedReason: () -> String
+    ) -> [ConversionJob] {
         guard let enumerator = fileManager.enumerator(
             at: root,
             includingPropertiesForKeys: [.isRegularFileKey, .isDirectoryKey, .isPackageKey],
@@ -74,19 +107,25 @@ final class FileScanner {
             }
 
             let relativePath = relativePath(for: fileURL.standardizedFileURL, under: root.standardizedFileURL)
-            jobs.append(makeJob(for: fileURL.standardizedFileURL, relativePath: relativePath, resolver: &resolver))
+            jobs.append(makeJob(for: fileURL.standardizedFileURL, relativePath: relativePath, resolver: &resolver, canDecode: canDecode, skippedReason: skippedReason))
         }
 
         return jobs
     }
 
-    private func makeJob(for sourceURL: URL, relativePath: String, resolver: inout OutputPathResolver) -> ConversionJob {
-        guard probe.canDecodeImage(at: sourceURL) else {
+    private func makeJob(
+        for sourceURL: URL,
+        relativePath: String,
+        resolver: inout OutputPathResolver,
+        canDecode: (URL) -> Bool,
+        skippedReason: () -> String
+    ) -> ConversionJob {
+        guard canDecode(sourceURL) else {
             return ConversionJob(
                 sourceURL: sourceURL,
                 relativePath: relativePath,
                 targetURL: nil,
-                status: .skipped("macOS cannot decode this image")
+                status: .skipped(skippedReason())
             )
         }
 

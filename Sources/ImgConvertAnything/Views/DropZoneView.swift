@@ -2,6 +2,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct DropZoneView: View {
+    let mode: ConversionMode
     let addURLs: ([URL]) -> Void
     @State private var isTargeted = false
 
@@ -11,10 +12,10 @@ struct DropZoneView: View {
                 .font(.system(size: 30, weight: .medium))
                 .foregroundStyle(isTargeted ? .blue : .secondary)
 
-            Text("Drop files or folders")
+            Text("Drop \(mode.title.lowercased()) or folders")
                 .font(.headline)
 
-            Text("RAW, JPEG, PNG, TIFF, HEIC, WebP, GIF, BMP")
+            Text(mode.inputSummary)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(2)

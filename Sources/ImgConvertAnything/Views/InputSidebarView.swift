@@ -5,8 +5,17 @@ struct InputSidebarView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
+            Picker("Mode", selection: $store.mode) {
+                ForEach(ConversionMode.allCases) { mode in
+                    Label(mode.title, systemImage: mode.systemImageName)
+                        .tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .disabled(store.isConverting)
+
             VStack(alignment: .leading, spacing: 4) {
-                Text("Inputs")
+                Text("\(store.mode.title) Inputs")
                     .font(.title3.weight(.semibold))
                 Text("Add files or folders with Finder, or drop them below.")
                     .font(.caption)
@@ -17,7 +26,7 @@ struct InputSidebarView: View {
                 Button {
                     store.presentInputPanel()
                 } label: {
-                    Label("Add Files/Folders", systemImage: "plus")
+                    Label("Add \(store.mode.title)", systemImage: "plus")
                 }
 
                 Button {
@@ -26,18 +35,18 @@ struct InputSidebarView: View {
                     Image(systemName: "trash")
                 }
                 .help("Clear inputs")
-                .disabled(store.inputURLs.isEmpty || store.isConverting)
+                .disabled(store.activeInputURLs.isEmpty || store.isConverting)
             }
 
-            DropZoneView(addURLs: store.addInputURLs)
+            DropZoneView(mode: store.mode, addURLs: store.addInputURLs)
 
-            Text("Supported when macOS can decode it: RAW, JPEG, PNG, TIFF, HEIC, WebP, GIF, BMP, and more.")
+            Text("Supported: \(store.mode.inputSummary)")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
             List {
-                ForEach(store.inputURLs, id: \.self) { url in
-                    InputRowView(url: url)
+                ForEach(store.activeInputURLs, id: \.self) { url in
+                    InputRowView(url: url, mode: store.mode)
                         .padding(.vertical, 2)
                 }
                 .onDelete(perform: store.removeInputs)
@@ -50,10 +59,11 @@ struct InputSidebarView: View {
 
 private struct InputRowView: View {
     let url: URL
+    let mode: ConversionMode
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: url.isDirectoryURL ? "folder" : "photo")
+            Image(systemName: iconName)
                 .foregroundStyle(url.isDirectoryURL ? .blue : .secondary)
                 .frame(width: 18)
 
@@ -66,6 +76,19 @@ private struct InputRowView: View {
                     .lineLimit(1)
                     .truncationMode(.middle)
             }
+        }
+    }
+
+    private var iconName: String {
+        if url.isDirectoryURL {
+            return "folder"
+        }
+
+        switch mode {
+        case .images:
+            return "photo"
+        case .videos:
+            return "film"
         }
     }
 }

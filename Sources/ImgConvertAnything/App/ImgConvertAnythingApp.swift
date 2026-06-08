@@ -16,7 +16,7 @@ struct ImgConvertAnythingApp: App {
     var body: some Scene {
         WindowGroup("Image Convert Anything") {
             ContentView(store: store)
-                .frame(minWidth: 980, minHeight: 680)
+                .frame(minWidth: 760, minHeight: 560)
         }
         .windowResizability(.contentMinSize)
         .commands {
@@ -30,6 +30,11 @@ struct ImgConvertAnythingApp: App {
                     store.presentOutputPanel()
                 }
                 .keyboardShortcut("o", modifiers: [.command, .shift])
+
+                Button("Open Settings...") {
+                    NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                }
+                .keyboardShortcut(",", modifiers: [.command])
             }
 
             CommandGroup(after: .saveItem) {
@@ -45,6 +50,10 @@ struct ImgConvertAnythingApp: App {
                 .keyboardShortcut(".", modifiers: [.command])
                 .disabled(!store.isConverting)
             }
+        }
+
+        Settings {
+            SettingsView(store: store)
         }
     }
 }

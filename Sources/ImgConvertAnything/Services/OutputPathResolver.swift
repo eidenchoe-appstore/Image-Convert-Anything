@@ -2,13 +2,21 @@ import Foundation
 
 struct OutputPathResolver {
     private let outputFolder: URL
-    private let outputFormat: OutputFormat
+    private let outputExtension: String
     private let fileManager: FileManager
     private var reservedPaths: Set<String> = []
 
     init(outputFolder: URL, outputFormat: OutputFormat, fileManager: FileManager = .default) {
+        self.init(outputFolder: outputFolder, outputExtension: outputFormat.fileExtension, fileManager: fileManager)
+    }
+
+    init(outputFolder: URL, videoOutputFormat: VideoOutputFormat, fileManager: FileManager = .default) {
+        self.init(outputFolder: outputFolder, outputExtension: videoOutputFormat.fileExtension, fileManager: fileManager)
+    }
+
+    init(outputFolder: URL, outputExtension: String, fileManager: FileManager = .default) {
         self.outputFolder = outputFolder.standardizedFileURL
-        self.outputFormat = outputFormat
+        self.outputExtension = outputExtension
         self.fileManager = fileManager
     }
 
@@ -21,14 +29,14 @@ struct OutputPathResolver {
             : outputFolder.appendingPathComponent(relativeDirectory, isDirectory: true)
         var candidate = directoryURL
             .appendingPathComponent(baseName)
-            .appendingPathExtension(outputFormat.fileExtension)
+            .appendingPathExtension(outputExtension)
             .standardizedFileURL
         var suffix = 1
 
         while fileManager.fileExists(atPath: candidate.path) || reservedPaths.contains(candidate.path) {
             candidate = directoryURL
                 .appendingPathComponent("\(baseName) (\(suffix))")
-                .appendingPathExtension(outputFormat.fileExtension)
+                .appendingPathExtension(outputExtension)
                 .standardizedFileURL
             suffix += 1
         }

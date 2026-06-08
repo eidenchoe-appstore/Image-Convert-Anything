@@ -3,19 +3,83 @@ import Foundation
 
 @MainActor
 final class ConversionStore: ObservableObject {
-    @Published var inputURLs: [URL] = []
+    @Published var mode: ConversionMode = .images {
+        didSet {
+            jobs.removeAll()
+        }
+    }
+
+    @Published var imageInputURLs: [URL] = []
+    @Published var videoInputURLs: [URL] = []
     @Published var outputFolder: URL?
-    @Published var outputFormat: OutputFormat = .png
-    @Published var jpegQuality: Double = 0.9
+    @Published var defaultOutputFolder: URL = ConversionStore.fallbackDefaultOutputFolder {
+        didSet {
+            defaults.set(defaultOutputFolder.path, forKey: Defaults.defaultOutputFolderPath)
+        }
+    }
+
+    @Published var openOutputFolderAfterConversion = true {
+        didSet {
+            defaults.set(openOutputFolderAfterConversion, forKey: Defaults.openOutputFolderAfterConversion)
+        }
+    }
+
+    @Published var imageOutputFormat: OutputFormat = .png
+    @Published var imageQuality: Double = 0.9
+    @Published var videoOutputFormat: VideoOutputFormat = .gif
+    @Published var videoQuality: Double = 0.85
+    @Published var videoFPS: Double = 12
+    @Published var videoMaxWidth: Double = 720
     @Published var jobs: [ConversionJob] = []
     @Published var logs: [ConversionLogEntry] = []
     @Published var isScanning = false
     @Published var isConverting = false
 
+    private enum Defaults {
+        static let defaultOutputFolderPath = "defaultOutputFolderPath"
+        static let openOutputFolderAfterConversion = "openOutputFolderAfterConversion"
+    }
+
+    private static var fallbackDefaultOutputFolder: URL {
+        FileManager.default
+            .urls(for: .picturesDirectory, in: .userDomainMask)
+            .first?
+            .appendingPathComponent("Image Convert Anything", isDirectory: true)
+        ?? URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Pictures/Image Convert Anything", isDirectory: true)
+    }
+
+    private let defaults = UserDefaults.standard
     private var runningTask: Task<Void, Never>?
 
+    init() {
+        if let path = defaults.string(forKey: Defaults.defaultOutputFolderPath), !path.isEmpty {
+            defaultOutputFolder = URL(fileURLWithPath: path)
+        } else {
+            defaults.set(defaultOutputFolder.path, forKey: Defaults.defaultOutputFolderPath)
+        }
+
+        if defaults.object(forKey: Defaults.openOutputFolderAfterConversion) == nil {
+            defaults.set(true, forKey: Defaults.openOutputFolderAfterConversion)
+        } else {
+            openOutputFolderAfterConversion = defaults.bool(forKey: Defaults.openOutputFolderAfterConversion)
+        }
+    }
+
+    var activeInputURLs: [URL] {
+        switch mode {
+        case .images:
+            return imageInputURLs
+        case .videos:
+            return videoInputURLs
+        }
+    }
+
+    var effectiveOutputFolder: URL {
+        outputFolder ?? defaultOutputFolder
+    }
+
     var canConvert: Bool {
-        !inputURLs.isEmpty && outputFolder != nil && !isConverting
+        !activeInputURLs.isEmpty && !isConverting
     }
 
     var processedCount: Int {
@@ -58,9 +122,9 @@ final class ConversionStore: ObservableObject {
 
     func presentInputPanel() {
         let panel = NSOpenPanel()
-        panel.title = "Select Input Files Or Folders"
-        panel.prompt = "Add Inputs"
-        panel.message = "Choose any image files or folders. The app will scan folders recursively and convert files that macOS can decode."
+        panel.title = "Select \(mode.title) Or Folders"
+        panel.prompt = "Add \(mode.title)"
+        panel.message = "Choose \(mode.title.lowercased()) or folders. The app will scan folders recursively and convert supported files."
         panel.canChooseFiles = true
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = true
@@ -75,7 +139,7 @@ final class ConversionStore: ObservableObject {
         let panel = NSOpenPanel()
         panel.title = "Choose Output Folder"
         panel.prompt = "Use Folder"
-        panel.message = "Converted images will be written here. Original files are never modified."
+        panel.message = "Converted media will be written here for this session. Original files are never modified."
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
@@ -85,34 +149,61 @@ final class ConversionStore: ObservableObject {
         if panel.runModal() == .OK {
             outputFolder = panel.urls.first
             if let outputFolder {
-                addLog(.info, "Output folder: \(outputFolder.path)")
+                addLog(.info, "Session output folder: \(outputFolder.path)")
             }
         }
     }
 
+    func presentDefaultOutputPanel() {
+        let panel = NSOpenPanel()
+        panel.title = "Choose Default Output Folder"
+        panel.prompt = "Save Default"
+        panel.message = "This folder is used automatically when no session output folder is selected."
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.canCreateDirectories = true
+        panel.resolvesAliases = true
+
+        if panel.runModal() == .OK, let url = panel.urls.first {
+            defaultOutputFolder = url.standardizedFileURL
+            addLog(.info, "Default output folder: \(defaultOutputFolder.path)")
+        }
+    }
+
+    func clearSessionOutputFolder() {
+        outputFolder = nil
+        addLog(.info, "Using default output folder: \(defaultOutputFolder.path)")
+    }
+
     func addInputURLs(_ urls: [URL]) {
         let standardized = urls.map(\.standardizedFileURL)
-        var seen = Set(inputURLs.map(\.path))
+        var current = activeInputURLs
+        var seen = Set(current.map(\.path))
         let newURLs = standardized.filter { url in
             seen.insert(url.path).inserted
         }
-        inputURLs.append(contentsOf: newURLs)
+
+        current.append(contentsOf: newURLs)
+        setActiveInputURLs(current)
 
         if !newURLs.isEmpty {
-            addLog(.info, "Added \(newURLs.count) input item(s)")
+            addLog(.info, "Added \(newURLs.count) \(mode.title.lowercased()) input item(s)")
         }
     }
 
     func removeInputs(at offsets: IndexSet) {
+        var current = activeInputURLs
         for index in offsets.sorted(by: >) {
-            inputURLs.remove(at: index)
+            current.remove(at: index)
         }
+        setActiveInputURLs(current)
     }
 
     func clearInputs() {
-        inputURLs.removeAll()
+        setActiveInputURLs([])
         jobs.removeAll()
-        addLog(.info, "Cleared input list")
+        addLog(.info, "Cleared \(mode.title.lowercased()) input list")
     }
 
     func clearLogs() {
@@ -120,32 +211,34 @@ final class ConversionStore: ObservableObject {
     }
 
     func revealOutputFolder() {
-        guard let outputFolder else {
-            return
-        }
-
-        NSWorkspace.shared.open(outputFolder)
+        NSWorkspace.shared.open(effectiveOutputFolder)
     }
 
     func startConversion() {
-        guard canConvert, let outputFolder else {
-            if inputURLs.isEmpty {
-                addLog(.warning, "No input files or folders selected")
-            } else if self.outputFolder == nil {
-                addLog(.warning, "No output folder selected")
-            }
+        guard canConvert else {
+            addLog(.warning, "No \(mode.title.lowercased()) input files or folders selected")
             return
         }
 
         runningTask?.cancel()
-        let inputs = inputURLs
-        let selectedFormat = outputFormat
-        let selectedQuality = jpegQuality
+        let selectedMode = mode
+        let inputs = activeInputURLs
+        let destination = effectiveOutputFolder
+        let selectedImageFormat = imageOutputFormat
+        let selectedImageQuality = imageQuality
+        let selectedVideoFormat = videoOutputFormat
+        let selectedVideoSettings = VideoConversionSettings(
+            fps: Int(videoFPS.rounded()),
+            maxWidth: Int(videoMaxWidth.rounded()),
+            quality: videoQuality
+        )
+        let shouldOpenOutput = openOutputFolderAfterConversion
 
         isScanning = true
         isConverting = true
         jobs.removeAll()
-        addLog(.info, "Scanning \(inputs.count) input item(s)")
+        addLog(.info, "Scanning \(inputs.count) \(selectedMode.title.lowercased()) input item(s)")
+        addLog(.info, "Output folder: \(destination.path)")
 
         runningTask = Task { [weak self] in
             guard let self else {
@@ -153,7 +246,12 @@ final class ConversionStore: ObservableObject {
             }
 
             let scanSummary = await Task.detached(priority: .userInitiated) {
-                FileScanner().scan(inputs: inputs, outputFolder: outputFolder, outputFormat: selectedFormat)
+                switch selectedMode {
+                case .images:
+                    return FileScanner().scan(inputs: inputs, outputFolder: destination, outputFormat: selectedImageFormat)
+                case .videos:
+                    return FileScanner().scan(inputs: inputs, outputFolder: destination, videoOutputFormat: selectedVideoFormat)
+                }
             }.value
 
             if Task.isCancelled {
@@ -168,7 +266,7 @@ final class ConversionStore: ObservableObject {
             if jobs.isEmpty {
                 isConverting = false
                 runningTask = nil
-                addLog(.warning, "No decodable image files found")
+                addLog(.warning, "No supported \(selectedMode.title.lowercased()) files found")
                 return
             }
 
@@ -188,12 +286,22 @@ final class ConversionStore: ObservableObject {
 
                 do {
                     try await Task.detached(priority: .userInitiated) {
-                        try ImageConversionService().convert(
-                            sourceURL: sourceURL,
-                            targetURL: targetURL,
-                            format: selectedFormat,
-                            jpegQuality: selectedQuality
-                        )
+                        switch selectedMode {
+                        case .images:
+                            try ImageConversionService().convert(
+                                sourceURL: sourceURL,
+                                targetURL: targetURL,
+                                format: selectedImageFormat,
+                                jpegQuality: selectedImageQuality
+                            )
+                        case .videos:
+                            try VideoConversionService().convert(
+                                sourceURL: sourceURL,
+                                targetURL: targetURL,
+                                format: selectedVideoFormat,
+                                settings: selectedVideoSettings
+                            )
+                        }
                     }.value
 
                     if Task.isCancelled {
@@ -209,15 +317,29 @@ final class ConversionStore: ObservableObject {
                 }
             }
 
+            let completedSuccessCount = successCount
             isConverting = false
             isScanning = false
             runningTask = nil
             addLog(.info, "Finished. Success \(successCount), skipped \(skippedCount), failed \(failedCount), cancelled \(cancelledCount)")
+
+            if shouldOpenOutput && completedSuccessCount > 0 {
+                NSWorkspace.shared.open(destination)
+            }
         }
     }
 
     func cancelConversion() {
         runningTask?.cancel()
+    }
+
+    private func setActiveInputURLs(_ urls: [URL]) {
+        switch mode {
+        case .images:
+            imageInputURLs = urls
+        case .videos:
+            videoInputURLs = urls
+        }
     }
 
     private func finishCancelled() {
