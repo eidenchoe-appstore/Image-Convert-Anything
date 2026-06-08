@@ -58,7 +58,9 @@ final class ConversionStore: ObservableObject {
 
     func presentInputPanel() {
         let panel = NSOpenPanel()
-        panel.title = "Add Images Or Folders"
+        panel.title = "Select Input Files Or Folders"
+        panel.prompt = "Add Inputs"
+        panel.message = "Choose any image files or folders. The app will scan folders recursively and convert files that macOS can decode."
         panel.canChooseFiles = true
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = true
@@ -72,6 +74,8 @@ final class ConversionStore: ObservableObject {
     func presentOutputPanel() {
         let panel = NSOpenPanel()
         panel.title = "Choose Output Folder"
+        panel.prompt = "Use Folder"
+        panel.message = "Converted images will be written here. Original files are never modified."
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false

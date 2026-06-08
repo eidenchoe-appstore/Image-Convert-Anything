@@ -5,16 +5,20 @@ struct InputSidebarView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("Inputs")
                     .font(.title3.weight(.semibold))
-                Spacer()
+                Text("Add files or folders with Finder, or drop them below.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack(spacing: 8) {
                 Button {
                     store.presentInputPanel()
                 } label: {
-                    Image(systemName: "plus")
+                    Label("Add Files/Folders", systemImage: "plus")
                 }
-                .help("Add input")
 
                 Button {
                     store.clearInputs()
@@ -26,6 +30,10 @@ struct InputSidebarView: View {
             }
 
             DropZoneView(addURLs: store.addInputURLs)
+
+            Text("Supported when macOS can decode it: RAW, JPEG, PNG, TIFF, HEIC, WebP, GIF, BMP, and more.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
             List {
                 ForEach(store.inputURLs, id: \.self) { url in
