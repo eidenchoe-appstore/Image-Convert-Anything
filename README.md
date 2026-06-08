@@ -1,4 +1,4 @@
-# <img src="icon.png" alt="Image Convert Anything icon" width="34"> Image Convert Anything
+# Image Convert Anything
 
 A small macOS batch converter for images and videos. Drop files or folders, choose an output format, and let the app preserve your folder structure while converting.
 
@@ -120,6 +120,10 @@ The generated DMG is written to:
 ```text
 dist/ImageConvertAnything.dmg
 ```
+
+## App Icon
+
+The app icon source is `app_icon.icon`, an Apple Icon Composer document. The build and package scripts render it with Icon Composer's `ictool` and package the generated `AppIcon.icns` into the app bundle.
 
 ## Distribution Notes
 
