@@ -1,6 +1,6 @@
 # Image Convert Anything
 
-`Image Convert Anything` is a local macOS app that batch converts RAW and other macOS-readable image files to JPEG or PNG.
+`Image Convert Anything` is a local macOS app that batch converts RAW and other macOS-readable image files into common output formats.
 
 ## Download
 
@@ -15,13 +15,26 @@ Open the DMG, then drag `Image Convert Anything.app` into `Applications`.
 - Drag and drop files or folders into the app.
 - Select input files and folders with Finder panels.
 - Recursively scan folders and preserve the input folder structure in the output folder.
-- Convert RAW, JPEG, PNG, TIFF, HEIC, WebP, GIF, BMP, and other formats supported by macOS image frameworks.
-- Convert to JPEG or PNG.
-- Control JPEG output quality.
+- Read RAW, JPEG, PNG, TIFF, HEIC, WebP, GIF, BMP, and other formats supported by macOS image frameworks.
+- Export to PNG, JPEG, HEIC, TIFF, GIF, BMP, or JPEG 2000.
+- Use PNG as the default output format.
+- Control quality for lossy formats such as JPEG, HEIC, and JPEG 2000.
 - Skip files that macOS cannot decode without stopping the full batch.
 - Preserve input folder structure in the selected output folder.
 - Avoid overwriting files by adding numeric suffixes.
 - Build a local installable DMG with `hdiutil`.
+
+## Output Formats
+
+| Format | Extension | Notes |
+| --- | --- | --- |
+| PNG | `.png` | Default output; lossless and broadly compatible. |
+| JPEG | `.jpg` | Smaller files with adjustable quality. |
+| HEIC | `.heic` | Modern compressed photo format on supported macOS systems. |
+| TIFF | `.tiff` | High-quality archive format. |
+| GIF | `.gif` | Single-frame GIF output. |
+| BMP | `.bmp` | Bitmap output. |
+| JPEG 2000 | `.jp2` | JPEG 2000 output on supported macOS systems. |
 
 ## Package Included
 

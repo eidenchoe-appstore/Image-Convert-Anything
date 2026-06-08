@@ -5,7 +5,7 @@ import Foundation
 final class ConversionStore: ObservableObject {
     @Published var inputURLs: [URL] = []
     @Published var outputFolder: URL?
-    @Published var outputFormat: OutputFormat = .jpeg
+    @Published var outputFormat: OutputFormat = .png
     @Published var jpegQuality: Double = 0.9
     @Published var jobs: [ConversionJob] = []
     @Published var logs: [ConversionLogEntry] = []

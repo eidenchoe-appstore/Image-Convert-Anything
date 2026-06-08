@@ -5,6 +5,7 @@ import ImageIO
 enum ImageConversionError: LocalizedError {
     case cannotDecode
     case cannotRender
+    case unsupportedOutputFormat(String)
     case cannotEncode
 
     var errorDescription: String? {
@@ -13,6 +14,8 @@ enum ImageConversionError: LocalizedError {
             return "Cannot decode source image"
         case .cannotRender:
             return "Cannot render source image"
+        case .unsupportedOutputFormat(let format):
+            return "\(format) output is not supported by this macOS installation"
         case .cannotEncode:
             return "Cannot encode output image"
         }
@@ -42,9 +45,13 @@ final class ImageConversionService {
         }
 
         let outputData = NSMutableData()
+        guard Self.supportedDestinationTypes.contains(format.contentTypeIdentifier) else {
+            throw ImageConversionError.unsupportedOutputFormat(format.displayName)
+        }
+
         guard let destination = CGImageDestinationCreateWithData(
             outputData,
-            format.contentType.identifier as CFString,
+            format.contentTypeIdentifier as CFString,
             1,
             nil
         ) else {
@@ -52,13 +59,12 @@ final class ImageConversionService {
         }
 
         let options: CFDictionary?
-        switch format {
-        case .jpeg:
+        if format.supportsQuality {
             let quality = min(max(jpegQuality, 0.1), 1.0)
             options = [
                 kCGImageDestinationLossyCompressionQuality: quality
             ] as CFDictionary
-        case .png:
+        } else {
             options = nil
         }
 
@@ -86,5 +92,10 @@ final class ImageConversionService {
         }
 
         return CIImage(cgImage: cgImage)
+    }
+
+    private static var supportedDestinationTypes: Set<String> {
+        let identifiers = CGImageDestinationCopyTypeIdentifiers() as NSArray
+        return Set(identifiers.compactMap { $0 as? String })
     }
 }
