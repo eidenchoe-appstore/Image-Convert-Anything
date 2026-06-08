@@ -1,33 +1,64 @@
 # <img src="icon.png" alt="Image Convert Anything icon" width="34"> Image Convert Anything
 
-Batch-convert images and videos on macOS with a simple Finder-friendly workflow.
+A small macOS batch converter for images and videos. Drop files or folders, choose an output format, and let the app preserve your folder structure while converting.
 
-[Download the latest DMG](https://github.com/eidenchoe-appstore/Image-Convert-Anything/releases/latest/download/ImageConvertAnything.dmg)
+[![Latest Release](https://img.shields.io/github/v/release/eidenchoe-appstore/Image-Convert-Anything?label=release)](https://github.com/eidenchoe-appstore/Image-Convert-Anything/releases/latest)
+[![Download DMG](https://img.shields.io/badge/download-DMG-blue)](https://github.com/eidenchoe-appstore/Image-Convert-Anything/releases/latest/download/ImageConvertAnything.dmg)
+[![macOS](https://img.shields.io/badge/macOS-14%2B-lightgrey)](#requirements)
+
+## Download
+
+[Download ImageConvertAnything.dmg](https://github.com/eidenchoe-appstore/Image-Convert-Anything/releases/latest/download/ImageConvertAnything.dmg)
 
 Open the DMG, then drag `Image Convert Anything.app` into `Applications`.
 
-## Highlights
+## What You Get
 
-| Feature | What it does |
+| Feature | Description |
 | --- | --- |
-| Image converter | Reads RAW, JPEG, PNG, TIFF, HEIC, WebP, GIF, BMP, and other formats supported by macOS image frameworks. |
-| Video converter | Converts common video files such as MOV, MP4, M4V, AVI, MKV, and WebM into GIF or WebM. |
-| Finder-first input | Add files and folders from Finder panels, or drag them directly into the app. |
-| Folder batch mode | Scans folders recursively and preserves the original folder structure in the output folder. |
-| Flexible export | Exports images to PNG, JPEG, HEIC, TIFF, GIF, BMP, or JPEG 2000. PNG is the default. |
-| Video tuning | Controls GIF/WebM frame rate, maximum width, and WebM quality. |
-| Default output folder | Uses a saved default output folder when no session output folder is selected. |
-| Auto reveal | Opens the output folder automatically after a successful conversion. |
+| Image batch conversion | Convert RAW and common image files into PNG, JPEG, HEIC, TIFF, GIF, BMP, or JPEG 2000. |
+| Video to GIF/WebM | Convert common video files into animated GIF or WebM. |
+| Folder-first workflow | Drop folders or select them from Finder; subfolders are scanned recursively. |
+| Structure preservation | Output files keep the source folder structure inside the selected destination. |
+| Safe filenames | Existing output files are not overwritten; duplicates get numbered names. |
+| Default output folder | Set a default destination once and convert without choosing an output path every time. |
+| Auto reveal | After a successful conversion, the output folder opens automatically. |
+| Native macOS UI | SwiftUI app with Finder panels, drag and drop, progress, logs, and cancellable jobs. |
+
+## Requirements
+
+- macOS 14 or later.
+- Image conversion uses macOS Core Image and ImageIO.
+- Video conversion requires `ffmpeg`.
+
+## About ffmpeg
+
+The app does not automatically install ffmpeg from the DMG. A DMG installer should not silently install Homebrew packages or command-line dependencies because that requires network access, user trust decisions, and may require administrator-level changes outside the app bundle.
+
+For video conversion, install ffmpeg yourself:
+
+```bash
+brew install ffmpeg
+```
+
+The app automatically detects common Homebrew locations:
+
+```text
+/opt/homebrew/bin/ffmpeg
+/usr/local/bin/ffmpeg
+```
+
+Image conversion works without ffmpeg. Only the `Videos` tab needs it.
 
 ## Image Workflow
 
-1. Choose the `Images` tab.
-2. Drop image files/folders, or select them with `Add Images`.
-3. Pick an output format.
-4. Choose a session output folder, or use the saved default folder.
+1. Choose `Images`.
+2. Drop files/folders, or click `Add Images`.
+3. Pick the output format.
+4. Choose a session output folder, or use the saved default output folder.
 5. Press `Convert`.
 
-Supported image export formats:
+### Image Export Formats
 
 | Format | Extension | Notes |
 | --- | --- | --- |
@@ -35,52 +66,61 @@ Supported image export formats:
 | JPEG | `.jpg` | Smaller files with adjustable quality. |
 | HEIC | `.heic` | Modern compressed photo format on supported macOS systems. |
 | TIFF | `.tiff` | High-quality archive format. |
-| GIF | `.gif` | Single-frame GIF output. |
+| GIF | `.gif` | Single-frame image output. |
 | BMP | `.bmp` | Bitmap output. |
 | JPEG 2000 | `.jp2` | JPEG 2000 output on supported macOS systems. |
 
+### Image Input
+
+The app accepts RAW, JPEG, PNG, TIFF, HEIC, WebP, GIF, BMP, and other image formats that macOS can decode.
+
 ## Video Workflow
 
-1. Choose the `Videos` tab.
-2. Drop video files/folders, or select them with `Add Videos`.
+1. Choose `Videos`.
+2. Drop files/folders, or click `Add Videos`.
 3. Choose `GIF` or `WebM`.
-4. Set FPS, maximum width, and WebM quality when needed.
+4. Tune FPS, maximum width, and WebM quality.
 5. Press `Convert`.
 
-Video conversion uses `ffmpeg`. The app automatically detects Homebrew-style installs such as `/opt/homebrew/bin/ffmpeg` and `/usr/local/bin/ffmpeg`. If video conversion is unavailable, install it with:
+### Video Export Formats
 
-```bash
-brew install ffmpeg
-```
+| Format | Extension | Notes |
+| --- | --- | --- |
+| GIF | `.gif` | Animated image output for previews and sharing. |
+| WebM | `.webm` | Compact web video output using VP9. |
+
+### Video Input
+
+The app accepts common video files such as MOV, MP4, M4V, AVI, MKV, MPEG, and WebM.
 
 ## Settings
 
-Open Settings to choose the default output folder and decide whether the app should reveal the output folder after conversion. If no session output folder is selected, the app uses:
+Open Settings to choose the default output folder and toggle automatic output reveal. If no session output folder is selected, the app uses:
 
 ```text
 ~/Pictures/Image Convert Anything
 ```
 
-## Package Included
-
-The repository includes a prebuilt local DMG at:
-
-```text
-dist/ImageConvertAnything.dmg
-```
-
-For normal installation, use the GitHub Release download link above.
-
-## Build And Run
+## Build From Source
 
 ```bash
+git clone https://github.com/eidenchoe-appstore/Image-Convert-Anything.git
+cd Image-Convert-Anything
 ./script/build_and_run.sh --verify
 ```
 
-## Package DMG
+## Package a DMG
 
 ```bash
 ./script/package_dmg.sh
 ```
 
-This package is for local installation and testing. It is ad-hoc signed, not Developer ID notarized.
+The generated DMG is written to:
+
+```text
+dist/ImageConvertAnything.dmg
+```
+
+## Distribution Notes
+
+This release is ad-hoc signed for local installation and testing. It is not Developer ID notarized. macOS may show a first-run warning for unsigned or unnotarized apps.
