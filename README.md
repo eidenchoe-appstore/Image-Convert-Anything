@@ -17,7 +17,7 @@ Open the DMG, then drag `Image Convert Anything.app` into `Applications`.
 | Feature | Description |
 | --- | --- |
 | Image batch conversion | Convert RAW and common image files into PNG, JPEG, HEIC, TIFF, GIF, BMP, or JPEG 2000. |
-| Video to GIF/WebM | Convert common video files into animated GIF or WebM. |
+| Video format conversion | Convert common video files into GIF, MP4, MOV, M4V, AVI, MKV, or WebM. |
 | Folder-first workflow | Drop folders or select them from Finder; subfolders are scanned recursively. |
 | Structure preservation | Output files keep the source folder structure inside the selected destination. |
 | Safe filenames | Existing output files are not overwritten; duplicates get numbered names. |
@@ -78,8 +78,8 @@ The app accepts RAW, JPEG, PNG, TIFF, HEIC, WebP, GIF, BMP, and other image form
 
 1. Choose `Videos`.
 2. Drop files/folders, or click `Add Videos`.
-3. Choose `GIF` or `WebM`.
-4. Tune FPS, maximum width, and WebM quality.
+3. Choose `GIF`, `MP4`, `MOV`, `M4V`, `AVI`, `MKV`, or `WebM`.
+4. Tune FPS, maximum width, and quality when the selected format supports it.
 5. Press `Convert`.
 
 ### Video Export Formats
@@ -87,7 +87,12 @@ The app accepts RAW, JPEG, PNG, TIFF, HEIC, WebP, GIF, BMP, and other image form
 | Format | Extension | Notes |
 | --- | --- | --- |
 | GIF | `.gif` | Animated image output for previews and sharing. |
-| WebM | `.webm` | Compact web video output using VP9. |
+| MP4 | `.mp4` | H.264/AAC output for broad compatibility. |
+| MOV | `.mov` | QuickTime-style H.264/AAC output for macOS workflows. |
+| M4V | `.m4v` | Apple-friendly H.264/AAC output. |
+| AVI | `.avi` | Legacy AVI output using MPEG-4 video and MP3 audio. |
+| MKV | `.mkv` | Matroska output using H.264/AAC. |
+| WebM | `.webm` | Compact web video output using VP9/Opus. |
 
 ### Video Input
 

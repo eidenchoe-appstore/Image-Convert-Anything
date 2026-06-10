@@ -222,17 +222,18 @@ private extension VideoOutputFormat {
         switch self {
         case .gif:
             return "sparkles"
+        case .mp4:
+            return "play.rectangle"
+        case .mov:
+            return "film"
+        case .m4v:
+            return "apple.logo"
+        case .avi:
+            return "rectangle.stack"
+        case .mkv:
+            return "shippingbox"
         case .webm:
             return "globe"
-        }
-    }
-
-    var supportsQuality: Bool {
-        switch self {
-        case .webm:
-            return true
-        case .gif:
-            return false
         }
     }
 }

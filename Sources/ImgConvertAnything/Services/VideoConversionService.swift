@@ -56,6 +56,51 @@ final class VideoConversionService {
                 "-loop", "0",
                 targetURL.path
             ]
+        case .mp4:
+            arguments = h264Arguments(
+                sourceURL: sourceURL,
+                targetURL: targetURL,
+                scaleFilter: scaleFilter,
+                quality: settings.quality,
+                extraArguments: ["-movflags", "+faststart"]
+            )
+        case .mov:
+            arguments = h264Arguments(
+                sourceURL: sourceURL,
+                targetURL: targetURL,
+                scaleFilter: scaleFilter,
+                quality: settings.quality,
+                extraArguments: []
+            )
+        case .m4v:
+            arguments = h264Arguments(
+                sourceURL: sourceURL,
+                targetURL: targetURL,
+                scaleFilter: scaleFilter,
+                quality: settings.quality,
+                extraArguments: ["-movflags", "+faststart"]
+            )
+        case .avi:
+            let quality = min(max(settings.quality, 0.1), 1.0)
+            let qscale = Int((31.0 - (quality * 29.0)).rounded())
+            arguments = [
+                "-y",
+                "-i", sourceURL.path,
+                "-vf", scaleFilter,
+                "-c:v", "mpeg4",
+                "-q:v", "\(qscale)",
+                "-c:a", "libmp3lame",
+                "-b:a", "160k",
+                targetURL.path
+            ]
+        case .mkv:
+            arguments = h264Arguments(
+                sourceURL: sourceURL,
+                targetURL: targetURL,
+                scaleFilter: scaleFilter,
+                quality: settings.quality,
+                extraArguments: []
+            )
         case .webm:
             let quality = min(max(settings.quality, 0.1), 1.0)
             let crf = Int((45.0 - (quality * 25.0)).rounded())
@@ -66,7 +111,8 @@ final class VideoConversionService {
                 "-c:v", "libvpx-vp9",
                 "-crf", "\(crf)",
                 "-b:v", "0",
-                "-an",
+                "-c:a", "libopus",
+                "-b:a", "128k",
                 targetURL.path
             ]
         }
@@ -94,6 +140,31 @@ final class VideoConversionService {
                 .joined(separator: "\n") ?? ""
             throw VideoConversionError.ffmpegFailed(message)
         }
+    }
+
+    private func h264Arguments(
+        sourceURL: URL,
+        targetURL: URL,
+        scaleFilter: String,
+        quality: Double,
+        extraArguments: [String]
+    ) -> [String] {
+        let clampedQuality = min(max(quality, 0.1), 1.0)
+        let crf = Int((35.0 - (clampedQuality * 17.0)).rounded())
+
+        return [
+            "-y",
+            "-i", sourceURL.path,
+            "-vf", scaleFilter,
+            "-c:v", "libx264",
+            "-preset", "medium",
+            "-crf", "\(crf)",
+            "-pix_fmt", "yuv420p",
+            "-c:a", "aac",
+            "-b:a", "160k"
+        ] + extraArguments + [
+            targetURL.path
+        ]
     }
 }
 
